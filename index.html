@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conciliação MP · Amofadas</title>
+<style>
+:root {
+  --navy: #0d1b2a;
+  --navy2: #1b2d3e;
+  --teal: #0e8c8c;
+  --teal-light: #e6f5f5;
+  --teal-mid: #a8d8d8;
+  --green: #1a7a4a;
+  --green-light: #e8f5ee;
+  --yellow: #c47a0a;
+  --yellow-light: #fdf4e3;
+  --red: #b83232;
+  --red-light: #fdecea;
+  --blue: #1a5fa8;
+  --blue-light: #e8f0fa;
+  --purple: #6b3fa0;
+  --purple-light: #f0ebfa;
+  --gray-50: #f7f9fc;
+  --gray-100: #eef1f6;
+  --gray-200: #dde3ec;
+  --gray-400: #8fa3b8;
+  --gray-600: #4a6070;
+  --gray-800: #1e2e3a;
+  --white: #ffffff;
+  --font: 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Cascadia Code','Fira Mono',monospace;
+  --radius: 10px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--gray-50);color:var(--gray-800);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--navy);padding:13px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+.hdr-logo{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;}
+.hdr h1{font-size:15px;font-weight:600;color:#fff;}
+.hdr small{font-size:11px;color:var(--teal-mid);display:block;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.sync-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--teal-mid);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--teal);}
+.dot.sync{animation:pulse 1s infinite;background:var(--yellow);}
+.dot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{padding:5px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{background:#0a7070;}
+.btn-ghost{background:rgba(255,255,255,.08);color:#f87171;border:1px solid rgba(248,113,113,.3);}
+.btn-ghost:hover{background:rgba(248,113,113,.12);}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;transition:opacity .4s;}
+#loading h2{color:#fff;font-size:17px;margin:14px 0 5px;}
+#loading p{color:var(--teal-mid);font-size:12px;}
+.spinner{width:30px;height:30px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin-top:14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* OVERLAY */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;}
+.ov.open{display:flex;}
+
+/* MODAL IMPORTAR */
+.modal{background:#fff;border-radius:14px;padding:26px;width:580px;max-width:96vw;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal h2{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:5px;}
+.modal>p{font-size:13px;color:var(--gray-600);margin-bottom:18px;}
+.upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;}
+.uc{border:2px dashed var(--gray-200);border-radius:9px;padding:18px 12px;text-align:center;cursor:pointer;transition:.2s;position:relative;}
+.uc:hover{border-color:var(--teal);background:var(--teal-light);}
+.uc.ok{border-color:var(--green);border-style:solid;background:var(--green-light);}
+.uc input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uc .ico{font-size:22px;margin-bottom:6px;}
+.uc h3{font-size:12px;font-weight:600;margin-bottom:3px;}
+.uc p{font-size:10px;color:var(--gray-600);margin:0;}
+.uc .fn{font-size:10px;color:var(--green);font-weight:600;margin-top:4px;}
+.modal-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+.btn-cancel{padding:8px 16px;border-radius:7px;border:1px solid var(--gray-200);background:#fff;font-size:13px;cursor:pointer;color:var(--gray-600);}
+.btn-ok{padding:8px 18px;border-radius:7px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-ok:disabled{background:var(--gray-400);cursor:not-allowed;}
+.imp-log{font-size:12px;color:var(--green);background:var(--green-light);padding:8px 12px;border-radius:6px;margin-bottom:12px;display:none;}
+
+/* CONFIRM */
+.cbox{background:#fff;border-radius:12px;padding:22px;width:340px;max-width:95vw;}
+.cbox h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:7px;}
+.cbox p{font-size:13px;color:var(--gray-600);margin-bottom:18px;}
+.cbtns{display:flex;gap:8px;justify-content:flex-end;}
+.btn-danger{padding:7px 14px;border-radius:7px;background:var(--red);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;}
+
+/* MAIN */
+#main{max-width:1280px;margin:0 auto;padding:20px;}
+
+/* EMPTY */
+#empty{text-align:center;padding:70px 20px;display:none;}
+#empty .eico{font-size:48px;margin-bottom:12px;}
+#empty h2{font-size:19px;font-weight:700;color:var(--navy);margin-bottom:7px;}
+#empty p{font-size:13px;color:var(--gray-600);margin-bottom:20px;}
+.btn-start{padding:11px 26px;background:var(--teal);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:20px;}
+.kpi{background:#fff;border-radius:var(--radius);padding:14px 16px;border-top:3px solid var(--teal);box-shadow:var(--shadow);}
+.kpi.g{border-top-color:var(--green);}
+.kpi.y{border-top-color:var(--yellow);}
+.kpi.r{border-top-color:var(--red);}
+.kpi.b{border-top-color:var(--blue);}
+.kpi.p{border-top-color:var(--purple);}
+.kpi label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-600);font-weight:600;}
+.kpi .v{font-size:18px;font-weight:700;color:var(--navy);margin-top:3px;font-family:var(--mono);}
+.kpi .s{font-size:10px;color:var(--gray-400);margin-top:2px;}
+
+/* TABS */
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:2px solid var(--gray-200);overflow-x:auto;}
+.tab{padding:8px 16px;font-size:12px;font-weight:500;color:var(--gray-600);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:600;}
+.tab:hover{color:var(--teal);}
+.tab-badge{display:inline-block;padding:1px 6px;border-radius:99px;font-size:10px;font-weight:700;margin-left:4px;background:var(--red-light);color:var(--red);}
+
+/* FILTROS */
+.frow{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.frow select,.frow input{padding:6px 10px;border:1px solid var(--gray-200);border-radius:7px;font-size:12px;color:var(--gray-800);background:#fff;outline:none;}
+.frow select:focus,.frow input:focus{border-color:var(--teal);}
+.fc{font-size:11px;color:var(--gray-400);margin-left:auto;}
+
+/* TABELA */
+.tw{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:var(--navy);}
+th{padding:9px 11px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--teal-mid);white-space:nowrap;}
+th.r{text-align:right;}
+tbody tr{border-bottom:1px solid var(--gray-100);}
+tbody tr:hover{background:var(--gray-50);}
+td{padding:8px 11px;font-size:12px;}
+td.r{text-align:right;font-family:var(--mono);font-size:11px;}
+td.mono{font-family:var(--mono);font-size:11px;color:var(--gray-600);}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;white-space:nowrap;}
+.b-rec{background:var(--green-light);color:var(--green);}
+.b-venc{background:var(--red-light);color:var(--red);}
+.b-ar{background:var(--blue-light);color:var(--blue);}
+.b-conf{background:var(--yellow-light);color:var(--yellow);}
+.b-pix{background:#f0fdf4;color:#15803d;}
+.b-cc{background:var(--purple-light);color:var(--purple);}
+.b-ig{background:var(--gray-100);color:var(--gray-400);}
+.b-canc{background:var(--red-light);color:var(--red);}
+.b-est{background:var(--yellow-light);color:var(--yellow);}
+
+/* BOTÕES AÇÃO */
+.abtns{display:flex;gap:4px;flex-wrap:wrap;}
+.abtn{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--gray-200);background:#fff;color:var(--gray-600);white-space:nowrap;}
+.abtn:hover{border-color:var(--teal);color:var(--teal);}
+.abtn.danger:hover{border-color:var(--red);color:var(--red);}
+.abtn.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
+.abtn.primary:hover{background:#0a7070;}
+
+/* MODAL AÇÃO MANUAL */
+.mact{background:#fff;border-radius:13px;padding:24px;width:500px;max-width:96vw;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:88vh;overflow-y:auto;}
+.mact h2{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.mact .info-box{font-size:11px;color:var(--gray-600);background:var(--teal-light);padding:8px 11px;border-radius:6px;margin-bottom:14px;font-family:var(--mono);}
+.mact label{font-size:12px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:4px;}
+.mact select,.mact textarea,.mact input[type=date]{width:100%;border:1px solid var(--gray-200);border-radius:7px;padding:8px 11px;font-size:13px;font-family:var(--font);color:var(--gray-800);outline:none;margin-bottom:12px;}
+.mact select:focus,.mact textarea:focus,.mact input:focus{border-color:var(--teal);}
+.mact textarea{resize:vertical;min-height:80px;}
+.mact-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.btn-save{padding:8px 18px;border-radius:7px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-save:hover{background:#0a7070;}
+
+/* VINCULAÇÃO */
+.vsearch{width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:12px;outline:none;margin-bottom:10px;}
+.vsearch:focus{border-color:var(--teal);}
+.vlista{max-height:260px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:7px;}
+.vitem{display:grid;grid-template-columns:1fr 70px 90px 80px;gap:8px;padding:9px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;font-size:11px;align-items:center;}
+.vitem:last-child{border-bottom:none;}
+.vitem:hover{background:var(--teal-light);}
+.vitem.sel{background:var(--green-light);}
+
+/* PREVISÃO */
+.prev-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:11px;}
+.prev-hdr{display:grid;grid-template-columns:160px 1fr 1fr 1fr 30px;gap:0;padding:13px 18px;cursor:pointer;transition:background .15s;border-left:4px solid var(--blue);}
+.prev-hdr:hover{background:var(--teal-light);}
+.prev-hdr.atual{border-left-color:var(--teal);}
+.prev-mes{font-size:14px;font-weight:700;color:var(--navy);}
+.prev-mes small{font-size:10px;font-weight:400;color:var(--gray-400);display:block;}
+.prev-col{text-align:right;}
+.prev-col label{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);font-weight:600;display:block;margin-bottom:2px;}
+.prev-col .pv{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--navy);}
+.prev-col .pv.b{color:var(--blue);}
+.prev-col .pv.t{color:var(--teal);}
+.pbar{height:3px;background:var(--gray-100);border-radius:99px;overflow:hidden;margin-top:5px;}
+.pbar-fill{height:100%;background:var(--blue);border-radius:99px;}
+.prev-chev{text-align:right;font-size:10px;color:var(--gray-400);transition:transform .2s;}
+.prev-chev.open{transform:rotate(90deg);}
+.prev-body{display:none;border-top:1px solid var(--gray-100);}
+.prev-body.open{display:block;}
+.prev-body table th{background:var(--gray-50);color:var(--gray-400);}
+
+/* PAGINAÇÃO */
+.pag{display:flex;justify-content:center;gap:4px;padding:12px;}
+.pb{padding:4px 10px;border-radius:5px;border:1px solid var(--gray-200);background:#fff;cursor:pointer;font-size:12px;color:var(--gray-600);}
+.pb.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.pb:hover:not(.active){border-color:var(--teal);color:var(--teal);}
+.empty-msg{text-align:center;padding:32px;color:var(--gray-400);font-size:13px;}
+
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .upload-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div style="font-size:44px">📊</div>
+  <h2>Carregando dados...</h2>
+  <p>Conectando ao Google Sheets</p>
+  <div class="spinner"></div>
+</div>
+
+<div class="hdr">
+  <div class="hdr-logo">H</div>
+  <div>
+    <h1>Conciliação Mercado Pago</h1>
+    <small>Hazon BPO Financeiro · <strong style="color:var(--teal-mid)">Amofadas</strong></small>
+  </div>
+  <div class="hdr-right">
+    <div class="sync-wrap"><span class="dot" id="dot"></span><span id="syncLbl">Conectando...</span></div>
+    <button class="btn btn-teal" onclick="abrirImport()">+ Importar</button>
+    <button class="btn btn-ghost" onclick="abrirConfirm()">Limpar</button>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR -->
+<div class="ov" id="ovImport">
+  <div class="modal">
+    <h2>Importar dados</h2>
+    <p>Relatório de Vendas é obrigatório. Liberações e Extrato são opcionais mas necessários para conciliação completa.</p>
+    <div class="imp-log" id="impLog"></div>
+    <div class="upload-grid">
+      <div class="uc" id="ucV"><input type="file" accept=".csv" id="fV" onchange="onUp('v',this)">
+        <div class="ico">🛒</div><h3>Vendas MP <span style="color:var(--red)">*</span></h3>
+        <p>Relatório de cobranças/vendas</p><div class="fn" id="nV"></div></div>
+      <div class="uc" id="ucL"><input type="file" accept=".csv" id="fL" onchange="onUp('l',this)">
+        <div class="ico">💳</div><h3>Liberações MP</h3>
+        <p>Relatório reserve-release</p><div class="fn" id="nL"></div></div>
+      <div class="uc" id="ucE"><input type="file" accept=".csv" id="fE" onchange="onUp('e',this)">
+        <div class="ico">🏦</div><h3>Extrato Bancário</h3>
+        <p>account_statement CSV</p><div class="fn" id="nE"></div></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cancel" onclick="fecharImport()">Cancelar</button>
+      <button class="btn-ok" id="btnOk" onclick="processar()" disabled>Processar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR LIMPAR -->
+<div class="ov" id="ovConfirm">
+  <div class="cbox">
+    <h3>Limpar todos os dados?</h3>
+    <p>Apaga tudo salvo no Google Sheets. Não pode ser desfeito.</p>
+    <div class="cbtns">
+      <button class="btn-cancel" onclick="fecharConfirm()">Cancelar</button>
+      <button class="btn-danger" onclick="limpar()">Sim, limpar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AÇÃO MANUAL -->
+<div class="ov" id="ovAct">
+  <div class="mact">
+    <h2 id="actTitle">Ação manual</h2>
+    <div class="info-box" id="actInfo"></div>
+    <div id="actBody"></div>
+    <div class="mact-ft">
+      <button class="btn-cancel" onclick="fecharAct()">Cancelar</button>
+      <button class="btn-save" id="btnAct" onclick="confirmarAct()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="empty">
+    <div class="eico">📋</div>
+    <h2>Nenhum dado ainda</h2>
+    <p>Importe o relatório de vendas do Mercado Pago para começar.</p>
+    <button class="btn-start" onclick="abrirImport()">+ Importar relatório de vendas</button>
+  </div>
+  <div id="conteudo" style="display:none">
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="tabs" id="tabsWrap">
+      <div class="tab active" onclick="showTab('vendas',this)">🛒 Vendas</div>
+      <div class="tab" onclick="showTab('conciliadas',this)">✅ Conciliadas</div>
+      <div class="tab" onclick="showTab('pendentes',this)">🔍 Pendentes <span class="tab-badge" id="badgePend">0</span></div>
+      <div class="tab" onclick="showTab('avencer',this)">📅 A Vencer</div>
+      <div class="tab" onclick="showTab('extrato',this)">🏦 Extrato Conciliado</div>
+      <div class="tab" onclick="showTab('semvenda',this)">⚠️ Sem Venda <span class="tab-badge" id="badgeSV">0</span></div>
+      <div class="tab" onclick="showTab('previsao',this)">📈 Previsão</div>
+    </div>
+    <div id="tab-vendas"></div>
+    <div id="tab-conciliadas" style="display:none"></div>
+    <div id="tab-pendentes" style="display:none"></div>
+    <div id="tab-avencer" style="display:none"></div>
+    <div id="tab-extrato" style="display:none"></div>
+    <div id="tab-semvenda" style="display:none"></div>
+    <div id="tab-previsao" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxSB9Inmj996M_BmsHoibzCMNGlH9OfD69du2i0rAIMnABVEaTiwH0Mx_F47-jxlxKa/exec';
+const K_VENDAS = 'hmp_vendas';
+const K_EXTRATO = 'hmp_extrato';
+const K_META = 'hmp_meta';
+const CHUNK = 120;
+
+// ── STATE ──
+let vendas   = {}; // { op_id: vendaObj }
+let extrato  = {}; // { ref_id: extratoObj }
+let meta     = { ultimaImport:'', chunksV:0, chunksE:0 };
+let csvV=null, csvL=null, csvE=null;
+let actChave=null, actTipo=null, vincSel=null;
+let pg = { vendas:1, conciliadas:1, pendentes:1, avencer:1, extrato:1, semvenda:1 };
+const PP = 50;
+
+// ── GAS API ──
+async function gasGet(k){ const r=await fetch(GAS_URL+'?action=get&key='+encodeURIComponent(k)); return r.json(); }
+async function gasSet(k,v){ const r=await fetch(GAS_URL+'?action=set&key='+encodeURIComponent(k)+'&value='+encodeURIComponent(v)); return r.json(); }
+async function gasDel(k){ const r=await fetch(GAS_URL+'?action=delete&key='+encodeURIComponent(k)); return r.json(); }
+
+// ── SYNC STATUS ──
+function ss(s,t){ document.getElementById('dot').className='dot'+(s==='sync'?' sync':s==='err'?' err':''); document.getElementById('syncLbl').textContent=t; }
+
+// ── INIT ──
+async function init(){
+  ss('sync','Carregando...');
+  try{
+    const m=await gasGet(K_META); if(m.value) meta=JSON.parse(m.value);
+    vendas={};
+    for(let i=0;i<(meta.chunksV||0);i++){ const r=await gasGet(K_VENDAS+'_'+i); if(r.value) Object.assign(vendas,JSON.parse(r.value)); }
+    extrato={};
+    for(let i=0;i<(meta.chunksE||0);i++){ const r=await gasGet(K_EXTRATO+'_'+i); if(r.value) Object.assign(extrato,JSON.parse(r.value)); }
+    ss('ok',stTxt());
+  }catch(e){ ss('err','Erro ao carregar'); }
+  hideLoad(); renderTudo();
+}
+
+function stTxt(){ return Object.keys(vendas).length+' vendas · '+Object.keys(extrato).length+' mov. extrato · '+meta.ultimaImport; }
+
+async function salvar(){
+  ss('sync','Salvando...');
+  try{
+    const ev=Object.entries(vendas); const tv=Math.ceil(ev.length/CHUNK)||1;
+    for(let i=0;i<tv;i++) await gasSet(K_VENDAS+'_'+i, JSON.stringify(Object.fromEntries(ev.slice(i*CHUNK,(i+1)*CHUNK))));
+    meta.chunksV=tv;
+    const ee=Object.entries(extrato); const te=Math.ceil(ee.length/CHUNK)||1;
+    for(let i=0;i<te;i++) await gasSet(K_EXTRATO+'_'+i, JSON.stringify(Object.fromEntries(ee.slice(i*CHUNK,(i+1)*CHUNK))));
+    meta.chunksE=te;
+    meta.ultimaImport=new Date().toLocaleDateString('pt-BR');
+    await gasSet(K_META,JSON.stringify(meta));
+    ss('ok',stTxt());
+  }catch(e){ ss('err','Erro ao salvar'); }
+}
+
+async function limpar(){
+  fecharConfirm(); ss('sync','Limpando...');
+  for(let i=0;i<(meta.chunksV||0);i++) await gasDel(K_VENDAS+'_'+i);
+  for(let i=0;i<(meta.chunksE||0);i++) await gasDel(K_EXTRATO+'_'+i);
+  await gasDel(K_META);
+  vendas={}; extrato={}; meta={ultimaImport:'',chunksV:0,chunksE:0};
+  ss('ok','Dados limpos'); renderTudo();
+}
+
+function hideLoad(){ const el=document.getElementById('loading'); el.style.opacity='0'; setTimeout(()=>el.style.display='none',400); }
+
+// ── MODAL IMPORT ──
+function abrirImport(){ csvV=csvL=csvE=null; ['fV','fL','fE'].forEach(id=>document.getElementById(id).value=''); ['nV','nL','nE'].forEach(id=>document.getElementById(id).textContent=''); ['ucV','ucL','ucE'].forEach(id=>document.getElementById(id).classList.remove('ok')); document.getElementById('impLog').style.display='none'; document.getElementById('btnOk').disabled=true; document.getElementById('btnOk').textContent='Processar →'; document.getElementById('ovImport').classList.add('open'); }
+function fecharImport(){ document.getElementById('ovImport').classList.remove('open'); }
+function abrirConfirm(){ document.getElementById('ovConfirm').classList.add('open'); }
+function fecharConfirm(){ document.getElementById('ovConfirm').classList.remove('open'); }
+function fecharAct(){ document.getElementById('ovAct').classList.remove('open'); actChave=null; actTipo=null; vincSel=null; }
+
+function onUp(tipo,input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const txt=e.target.result;
+    if(tipo==='v'){ csvV=parseCSV(txt,';'); document.getElementById('nV').textContent='✓ '+file.name; document.getElementById('ucV').classList.add('ok'); }
+    else if(tipo==='l'){ csvL=parseCSV(txt,';'); document.getElementById('nL').textContent='✓ '+file.name; document.getElementById('ucL').classList.add('ok'); }
+    else{ csvE=parseCSVExt(txt); document.getElementById('nE').textContent='✓ '+file.name; document.getElementById('ucE').classList.add('ok'); }
+    document.getElementById('btnOk').disabled=!csvV;
+    if(csvV) document.getElementById('btnOk').textContent='Processar →';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+// ── CSV ──
+function parseCSV(txt,sep){
+  const lines=txt.split('\n').filter(l=>l.trim());
+  const hdr=lines[0].split(sep).map(h=>h.trim().replace(/^"|"$/g,'').replace(/^\uFEFF/,''));
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=splitLine(lines[i],sep); if(vals.length<2) continue;
+    const obj={}; hdr.forEach((h,idx)=>{ obj[h]=(vals[idx]||'').replace(/^"|"$/g,'').trim(); }); rows.push(obj);
+  }
+  return {hdr,rows};
+}
+function parseCSVExt(txt){
+  const lines=txt.split('\n').filter(l=>l.trim());
+  // Encontrar linha de header (RELEASE_DATE)
+  let hdrIdx=lines.findIndex(l=>l.includes('RELEASE_DATE'));
+  if(hdrIdx<0) return {hdr:[],rows:[]};
+  const hdr=lines[hdrIdx].split(';').map(h=>h.trim().replace(/^\uFEFF/,''));
+  const rows=[];
+  for(let i=hdrIdx+1;i<lines.length;i++){
+    const vals=lines[i].split(';'); if(vals.length<2) continue;
+    const obj={}; hdr.forEach((h,idx)=>{ obj[h]=(vals[idx]||'').replace(/^"|"$/g,'').trim(); }); rows.push(obj);
+  }
+  return {hdr,rows};
+}
+function splitLine(l,sep){ const r=[]; let c=''; let q=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(ch==='"'){q=!q;}else if(ch===sep&&!q){r.push(c);c='';}else{c+=ch;} } r.push(c); return r; }
+
+// ── HELPERS ──
+function pBRL(s){ const n=parseFloat(String(s||'0').replace('.','').replace(',','.')); return isNaN(n)?0:n; }
+function fBRL(v){ return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fDate(s){ if(!s||s==='—') return '—'; const d=s.split('T')[0]; if(!d) return '—'; if(d.includes('-')){ const[y,m,dia]=d.split('-'); return dia+'/'+m+'/'+y; } if(d.includes('/')){ return d; } return s; }
+function parseDateBR(s){ if(!s) return null; s=s.trim(); if(s.includes('/')){ const[dd,mm,yyyy]=s.split(' ')[0].split('/'); return yyyy+'-'+mm+'-'+dd; } return s.substring(0,10); }
+function parseDateDash(s){ if(!s) return null; s=s.trim(); if(s.includes('-')){ const parts=s.split('-'); if(parts[0].length===4) return s.substring(0,10); return parts[2]+'-'+parts[1]+'-'+parts[0]; } return null; }
+function hoje(){ return new Date().toISOString().substring(0,10); }
+function addDias(iso,d){ const dt=new Date(iso+'T12:00:00Z'); dt.setUTCDate(dt.getUTCDate()+d); return dt.toISOString().substring(0,10); }
+function nomeMes(ym){ const[y,m]=ym.split('-'); return new Date(parseInt(y),parseInt(m)-1,1).toLocaleString('pt-BR',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase()); }
+function prazosDias(inst,tipo){ if(tipo==='bank_transfer'||tipo==='account_money') return [0]; const p=[]; for(let i=1;i<=inst;i++) p.push(30*i); return p; }
+function meioBadge(tipo,inst){ return tipo==='credit_card'?`<span class="badge b-cc">Cartão ${inst}x</span>`:tipo==='bank_transfer'?'<span class="badge b-pix">PIX</span>':tipo==='account_money'?'<span class="badge b-pix">Saldo MP</span>':`<span class="badge b-ig">${tipo}</span>`; }
+function stBadge(s){ return s==='Recebido'?'<span class="badge b-rec">✅ Recebido</span>':s==='A Vencer'?'<span class="badge b-ar">🔵 A Vencer</span>':s==='Vencido'?'<span class="badge b-venc">🔴 Vencido</span>':s==='Conferido'?'<span class="badge b-conf">🟡 Conferido</span>':s==='Cancelado'?'<span class="badge b-canc">❌ Cancelado</span>':s==='Estorno'?'<span class="badge b-est">↩ Estorno</span>':'<span class="badge b-ig">'+s+'</span>'; }
+
+// ── PROCESSAR ──
+async function processar(){
+  document.getElementById('btnOk').disabled=true; document.getElementById('btnOk').textContent='Processando...';
+  const hdr=csvV.hdr;
+  const cOp=hdr.find(h=>h.includes('operation_id'))||hdr[8];
+  const cDt=hdr.find(h=>h.includes('date_approved'))||hdr[3];
+  const cInst=hdr.find(h=>h.includes('installments'))||hdr[5];
+  const cVal=hdr.find(h=>h.includes('net_received'))||hdr[6];
+  const cTipo=hdr.find(h=>h.includes('payment_type'))||hdr[7];
+  const cSt=hdr.find(h=>h.includes('status')&&!h.includes('detail'))||hdr[9];
+  const cNome=hdr.find(h=>h.includes('counterpart_name'))||hdr[2];
+
+  // Mapa liberações
+  const libMap={};
+  if(csvL){
+    csvL.rows.forEach(r=>{
+      if((r['RECORD_TYPE']||'')!=='release') return;
+      const src=String(r['SOURCE_ID']||'').trim(); if(!src||src==='nan') return;
+      if(!libMap[src]) libMap[src]={count:0,liquido:0,datas:[]};
+      libMap[src].count++;
+      libMap[src].liquido+=pBRL(r['NET_CREDIT_AMOUNT']);
+      libMap[src].datas.push(String(r['DATE']||'').substring(0,10));
+    });
+  }
+
+  // Mapa extrato
+  const extMap={};
+  if(csvE){
+    csvE.rows.forEach(r=>{
+      const ref=String(r['REFERENCE_ID']||'').trim(); if(!ref) return;
+      const tipo=String(r['TRANSACTION_TYPE']||'').trim();
+      if(tipo.toLowerCase().includes('pix enviado')) return; // ignorar saídas
+      const dataRaw=String(r['RELEASE_DATE']||'').trim();
+      const data=parseDateDash(dataRaw)||dataRaw;
+      const val=pBRL(r['TRANSACTION_NET_AMOUNT']);
+      if(!extMap[ref]) extMap[ref]={total:0,datas:[],tipo};
+      extMap[ref].total+=val;
+      extMap[ref].datas.push(data);
+    });
+  }
+
+  let novos=0, atualizados=0, ignorados=0;
+
+  csvV.rows.forEach(row=>{
+    const st=String(row[cSt]||'').trim().toLowerCase();
+    if(st!=='approved'){ ignorados++; return; }
+    const val=pBRL(row[cVal]); if(!val){ ignorados++; return; }
+    const op=String(row[cOp]||'').trim(); if(!op){ ignorados++; return; }
+    const dataAprov=parseDateBR(row[cDt]);
+    const inst=parseInt(row[cInst]||'1')||1;
+    const tipo=String(row[cTipo]||'').trim();
+    const nome=String(row[cNome]||'').trim();
+    const valParc=val/inst;
+    const prazos=prazosDias(inst,tipo);
+    const lib=libMap[op]||null;
+    const extV=extMap[op]||null;
+    const parcsLib=lib?lib.count:0;
+    const datasLib=lib?lib.datas.filter(Boolean).sort():[];
+    const hj=hoje();
+
+    prazos.forEach((dias,idx)=>{
+      const chave=op+'_p'+(idx+1);
+      const numParc=idx+1;
+      const venc=addDias(dataAprov,dias);
+      const jaRecebidoLib=numParc<=parcsLib;
+      const jaRecebidoExt=extV&&extV.total>0;
+      const recebido=jaRecebidoLib||(dias===0&&jaRecebidoExt);
+      const venceu=!recebido&&venc<hj;
+      let statusP=recebido?'Recebido':venceu?'Vencido':'A Vencer';
+      let dataRec=null;
+      if(recebido){ dataRec=datasLib[idx]||(extV&&extV.datas[0])||null; }
+
+      const novo={ chave,op,nome,dataAprov,inst,numParc,tipo,valParc,venc,statusP,dataRec,obs:null,acaoManual:null,vencEdit:false };
+
+      if(!vendas[chave]){ vendas[chave]=novo; novos++; }
+      else{
+        const cur=vendas[chave];
+        // Não sobrescreve ações manuais
+        if(cur.acaoManual){ ignorados++; return; }
+        if(cur.statusP!==statusP||Math.abs(cur.valParc-valParc)>0.01){ vendas[chave]={...novo,obs:cur.obs,venc:cur.vencEdit?cur.venc:venc,vencEdit:cur.vencEdit}; atualizados++; }
+      }
+    });
+  });
+
+  // Processar extrato — entradas sem venda correspondente
+  const opIds=new Set(Object.values(vendas).map(p=>p.op));
+  if(csvE){
+    csvE.rows.forEach(r=>{
+      const ref=String(r['REFERENCE_ID']||'').trim(); if(!ref) return;
+      const tipo=String(r['TRANSACTION_TYPE']||'').trim();
+      if(tipo.toLowerCase().includes('pix enviado')) return;
+      if(opIds.has(ref)) return; // tem venda
+      const libRef=Object.values(libMap).find(l=>l);// não usado aqui
+      const dataRaw=String(r['RELEASE_DATE']||'').trim();
+      const data=parseDateDash(dataRaw)||dataRaw;
+      const val=pBRL(r['TRANSACTION_NET_AMOUNT']);
+      if(!extrato[ref]){
+        const isPix=tipo.includes('Pix')||tipo.includes('PIX');
+        extrato[ref]={ ref,tipo:isPix?'PIX Avulso':'Liberação MP',descricao:tipo,data,valor:val,vinculadoA:null,ignorado:false,obs:null };
+      }
+    });
+  }
+
+  const log=document.getElementById('impLog');
+  log.style.display='block';
+  log.textContent=`✓ ${novos} parcelas novas · ${atualizados} atualizadas · ${ignorados} ignoradas`;
+  await salvar();
+  setTimeout(()=>{ fecharImport(); renderTudo(); },1500);
+}
+
+// ── RENDER GERAL ──
+function renderTudo(){
+  const lista=Object.values(vendas);
+  const tem=lista.length>0;
+  document.getElementById('empty').style.display=tem?'none':'block';
+  document.getElementById('conteudo').style.display=tem?'block':'none';
+  if(!tem) return;
+  renderKPIs(lista);
+  const pend=lista.filter(p=>p.statusP==='Vencido'&&!p.acaoManual).length;
+  const sv=Object.values(extrato).filter(e=>!e.vinculadoA&&!e.ignorado).length;
+  document.getElementById('badgePend').textContent=pend;
+  document.getElementById('badgeSV').textContent=sv;
+  const tabAtiva=document.querySelector('.tab.active');
+  const nome=tabAtiva?tabAtiva.getAttribute('onclick').match(/'(\w+)'/)?.[1]:'vendas':'vendas';
+  renderTab(nome);
+}
+
+function renderTab(nome){
+  if(nome==='vendas') renderVendas();
+  else if(nome==='conciliadas') renderConciliadas();
+  else if(nome==='pendentes') renderPendentes();
+  else if(nome==='avencer') renderAVencer();
+  else if(nome==='extrato') renderExtratoConc();
+  else if(nome==='semvenda') renderSemVenda();
+  else if(nome==='previsao') renderPrevisao();
+}
+
+function renderKPIs(lista){
+  const total=lista.reduce((s,p)=>s+p.valParc,0);
+  const rec=lista.filter(p=>p.statusP==='Recebido').reduce((s,p)=>s+p.valParc,0);
+  const av=lista.filter(p=>p.statusP==='A Vencer').reduce((s,p)=>s+p.valParc,0);
+  const venc=lista.filter(p=>p.statusP==='Vencido').length;
+  const sv=Object.values(extrato).filter(e=>!e.vinculadoA&&!e.ignorado).length;
+  document.getElementById('kpiRow').innerHTML=`
+    <div class="kpi"><label>Total Vendas</label><div class="v">${fBRL(total)}</div><div class="s">${lista.length} parcelas</div></div>
+    <div class="kpi g"><label>Recebido</label><div class="v">${fBRL(rec)}</div><div class="s">${((rec/total)*100).toFixed(1)}% do total</div></div>
+    <div class="kpi b"><label>A Vencer</label><div class="v">${fBRL(av)}</div><div class="s">dentro do prazo</div></div>
+    <div class="kpi r"><label>Pendentes</label><div class="v">${venc}</div><div class="s">parcelas para investigar</div></div>
+    <div class="kpi y"><label>Sem Venda</label><div class="v">${sv}</div><div class="s">recebimentos não vinculados</div></div>`;
+}
+
+// ── ABA 1: VENDAS ──
+function renderVendas(){
+  const lista=Object.values(vendas).sort((a,b)=>b.dataAprov.localeCompare(a.dataAprov));
+  const fEl=document.getElementById('tab-vendas');
+  fEl.innerHTML=`
+    <div class="frow">
+      <select id="fvMes" onchange="renderVendas()"><option value="">Todos os meses</option>${mesesOpts(lista,'dataAprov')}</select>
+      <select id="fvTipo" onchange="renderVendas()"><option value="">Todos os meios</option><option value="credit_card">Cartão</option><option value="bank_transfer">PIX</option><option value="account_money">Saldo MP</option></select>
+      <select id="fvSt" onchange="renderVendas()"><option value="">Todos os status</option><option value="Recebido">Recebido</option><option value="A Vencer">A Vencer</option><option value="Vencido">Vencido</option><option value="Cancelado">Cancelado</option><option value="Estorno">Estorno</option><option value="Conferido">Conferido</option></select>
+      <input type="text" id="fvBusca" placeholder="ID operação..." oninput="renderVendas()" style="width:140px">
+      <span class="fc" id="fvCt"></span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>ID Operação</th><th>Cliente</th><th>Data Venda</th><th>Meio</th><th>Parcela</th><th class="r">Valor Parcela</th><th>Vencimento</th><th>Data Recebido</th><th>Status</th><th>Obs</th></tr></thead>
+      <tbody id="tbVendas"></tbody>
+    </table><div class="pag" id="pgVendas"></div></div>`;
+  renderTbVendas(lista);
+}
+
+function renderTbVendas(listaFull){
+  const mes=v('fvMes'), tipo=v('fvTipo'), st=v('fvSt'), busca=v('fvBusca');
+  let lista=listaFull.filter(p=>{
+    if(mes&&!p.dataAprov.startsWith(mes)) return false;
+    if(tipo&&p.tipo!==tipo) return false;
+    if(st&&p.statusP!==st) return false;
+    if(busca&&!p.op.includes(busca)) return false;
+    return true;
+  });
+  document.getElementById('fvCt').textContent=lista.length+' parcelas';
+  const ini=(pg.vendas-1)*PP; const pag=lista.slice(ini,ini+PP);
+  document.getElementById('tbVendas').innerHTML=pag.map(p=>`<tr>
+    <td class="mono">${p.op}</td>
+    <td style="font-size:11px">${p.nome||'—'}</td>
+    <td>${fDate(p.dataAprov)}</td>
+    <td>${meioBadge(p.tipo,p.inst)}</td>
+    <td style="font-size:11px;color:var(--gray-600)">${p.numParc}/${p.inst}</td>
+    <td class="r">${fBRL(p.valParc)}</td>
+    <td>${fDate(p.venc)}${p.vencEdit?' ✏️':''}</td>
+    <td>${fDate(p.dataRec)}</td>
+    <td>${stBadge(p.statusP)}</td>
+    <td>${p.obs?'<span title="'+p.obs+'" style="cursor:help">📝</span>':'—'}</td>
+  </tr>`).join('');
+  renderPag('pgVendas',lista.length,'vendas');
+}
+
+// ── ABA 2: CONCILIADAS ──
+function renderConciliadas(){
+  const lista=Object.values(vendas).filter(p=>p.statusP==='Recebido').sort((a,b)=>b.dataRec?.localeCompare(a.dataRec||'')||0);
+  document.getElementById('tab-conciliadas').innerHTML=`
+    <div class="frow">
+      <select id="fcMes" onchange="renderConciliadas()"><option value="">Todos os meses</option>${mesesOpts(lista,'dataRec')}</select>
+      <select id="fcTipo" onchange="renderConciliadas()"><option value="">Todos os meios</option><option value="credit_card">Cartão</option><option value="bank_transfer">PIX</option><option value="account_money">Saldo MP</option></select>
+      <input type="text" id="fcBusca" placeholder="ID operação..." oninput="renderConciliadas()" style="width:140px">
+      <span class="fc" id="fcCt"></span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>ID Operação</th><th>Cliente</th><th>Data Venda</th><th>Meio</th><th>Parcela</th><th class="r">Valor</th><th>Data Recebido</th><th>Ações</th></tr></thead>
+      <tbody id="tbConc"></tbody>
+    </table><div class="pag" id="pgConc"></div></div>`;
+  const mes=v('fcMes'), tipo=v('fcTipo'), busca=v('fcBusca');
+  let f=lista.filter(p=>{ if(mes&&!(p.dataRec||'').startsWith(mes)) return false; if(tipo&&p.tipo!==tipo) return false; if(busca&&!p.op.includes(busca)) return false; return true; });
+  document.getElementById('fcCt').textContent=f.length+' parcelas';
+  const ini=(pg.conciliadas-1)*PP; const pag=f.slice(ini,ini+PP);
+  document.getElementById('tbConc').innerHTML=pag.map(p=>`<tr>
+    <td class="mono">${p.op}</td><td style="font-size:11px">${p.nome||'—'}</td>
+    <td>${fDate(p.dataAprov)}</td><td>${meioBadge(p.tipo,p.inst)}</td>
+    <td style="font-size:11px;color:var(--gray-600)">${p.numParc}/${p.inst}</td>
+    <td class="r">${fBRL(p.valParc)}</td><td>${fDate(p.dataRec)}</td>
+    <td><button class="abtn danger" onclick="abrirAct('${p.chave}','desvincular')">↩ Desvincular</button></td>
+  </tr>`).join('');
+  renderPag('pgConc',f.length,'conciliadas');
+}
+
+// ── ABA 3: PENDENTES ──
+function renderPendentes(){
+  const lista=Object.values(vendas).filter(p=>p.statusP==='Vencido'||p.statusP==='Conferido'||p.statusP==='Cancelado'||p.statusP==='Estorno').sort((a,b)=>a.venc.localeCompare(b.venc));
+  document.getElementById('tab-pendentes').innerHTML=`
+    <div class="frow">
+      <select id="fpSt" onchange="renderPendentes()"><option value="">Todos</option><option value="Vencido">🔴 Vencido</option><option value="Conferido">🟡 Conferido</option><option value="Cancelado">❌ Cancelado</option><option value="Estorno">↩ Estorno</option></select>
+      <select id="fpMes" onchange="renderPendentes()"><option value="">Todos os meses</option>${mesesOpts(lista,'venc')}</select>
+      <input type="text" id="fpBusca" placeholder="ID operação..." oninput="renderPendentes()" style="width:140px">
+      <span class="fc" id="fpCt"></span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>ID Operação</th><th>Cliente</th><th>Data Venda</th><th>Meio</th><th>Parcela</th><th class="r">Valor</th><th>Vencimento</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead>
+      <tbody id="tbPend"></tbody>
+    </table><div class="pag" id="pgPend"></div></div>`;
+  const st=v('fpSt'), mes=v('fpMes'), busca=v('fpBusca');
+  let f=lista.filter(p=>{ if(st&&p.statusP!==st) return false; if(mes&&!p.venc.startsWith(mes)) return false; if(busca&&!p.op.includes(busca)) return false; return true; });
+  document.getElementById('fpCt').textContent=f.length+' parcelas';
+  const ini=(pg.pendentes-1)*PP; const pag=f.slice(ini,ini+PP);
+  document.getElementById('tbPend').innerHTML=pag.map(p=>`<tr>
+    <td class="mono">${p.op}</td><td style="font-size:11px">${p.nome||'—'}</td>
+    <td>${fDate(p.dataAprov)}</td><td>${meioBadge(p.tipo,p.inst)}</td>
+    <td style="font-size:11px;color:var(--gray-600)">${p.numParc}/${p.inst}</td>
+    <td class="r">${fBRL(p.valParc)}</td>
+    <td>${fDate(p.venc)}${p.vencEdit?' ✏️':''}</td>
+    <td>${stBadge(p.statusP)}</td>
+    <td>${p.obs?'<span title="'+p.obs+'" style="cursor:help;font-size:13px">📝</span>':'—'}</td>
+    <td><div class="abtns">
+      <button class="abtn primary" onclick="abrirAct('${p.chave}','conciliar')">🔗 Conciliar</button>
+      <button class="abtn" onclick="abrirAct('${p.chave}','editar')">✏️ Editar</button>
+      <button class="abtn" onclick="abrirAct('${p.chave}','status')">📋 Status</button>
+    </div></td>
+  </tr>`).join('');
+  renderPag('pgPend',f.length,'pendentes');
+}
+
+// ── ABA 4: A VENCER ──
+function renderAVencer(){
+  const hj=hoje(); const hjMes=hj.substring(0,7);
+  const lista=Object.values(vendas).filter(p=>p.statusP==='A Vencer').sort((a,b)=>a.venc.localeCompare(b.venc));
+  document.getElementById('tab-avencer').innerHTML=`
+    <div class="frow">
+      <select id="favMes" onchange="renderAVencer()"><option value="">Todos os meses</option>${mesesOpts(lista,'venc')}</select>
+      <select id="favTipo" onchange="renderAVencer()"><option value="">Todos os meios</option><option value="credit_card">Cartão</option><option value="bank_transfer">PIX</option><option value="account_money">Saldo MP</option></select>
+      <input type="text" id="favBusca" placeholder="ID operação..." oninput="renderAVencer()" style="width:140px">
+      <span class="fc" id="favCt"></span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>ID Operação</th><th>Cliente</th><th>Data Venda</th><th>Meio</th><th>Parcela</th><th class="r">Valor</th><th>Vencimento Esperado</th></tr></thead>
+      <tbody id="tbAV"></tbody>
+    </table><div class="pag" id="pgAV"></div></div>`;
+  const mes=v('favMes'), tipo=v('favTipo'), busca=v('favBusca');
+  let f=lista.filter(p=>{ if(mes&&!p.venc.startsWith(mes)) return false; if(tipo&&p.tipo!==tipo) return false; if(busca&&!p.op.includes(busca)) return false; return true; });
+  document.getElementById('favCt').textContent=f.length+' parcelas';
+  const ini=(pg.avencer-1)*PP; const pag=f.slice(ini,ini+PP);
+  document.getElementById('tbAV').innerHTML=pag.map(p=>{
+    const isHoje=p.venc===hj, isMes=p.venc.startsWith(hjMes);
+    return `<tr style="${isHoje?'background:var(--yellow-light)':''}">
+      <td class="mono">${p.op}</td><td style="font-size:11px">${p.nome||'—'}</td>
+      <td>${fDate(p.dataAprov)}</td><td>${meioBadge(p.tipo,p.inst)}</td>
+      <td style="font-size:11px;color:var(--gray-600)">${p.numParc}/${p.inst}</td>
+      <td class="r">${fBRL(p.valParc)}</td>
+      <td>${fDate(p.venc)}${isHoje?' <span class="badge b-conf">Hoje</span>':isMes?' <span class="badge b-ar">Este mês</span>':''}${p.vencEdit?' ✏️':''}</td>
+    </tr>`;
+  }).join('');
+  renderPag('pgAV',f.length,'avencer');
+}
+
+// ── ABA 5: EXTRATO CONCILIADO ──
+function renderExtratoConc(){
+  // Parcelas recebidas com dataRec
+  const lista=Object.values(vendas).filter(p=>p.statusP==='Recebido'&&p.dataRec).sort((a,b)=>b.dataRec.localeCompare(a.dataRec));
+  document.getElementById('tab-extrato').innerHTML=`
+    <div class="frow">
+      <select id="feMes" onchange="renderExtratoConc()"><option value="">Todos os meses</option>${mesesOpts(lista,'dataRec')}</select>
+      <input type="text" id="feBusca" placeholder="ID operação..." oninput="renderExtratoConc()" style="width:140px">
+      <span class="fc" id="feCt"></span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Data Recebimento</th><th>ID Operação</th><th>Cliente</th><th>Meio</th><th>Parcela</th><th class="r">Valor Recebido</th><th>Data Venda</th><th>Ações</th></tr></thead>
+      <tbody id="tbExt"></tbody>
+    </table><div class="pag" id="pgExt"></div></div>`;
+  const mes=v('feMes'), busca=v('feBusca');
+  let f=lista.filter(p=>{ if(mes&&!(p.dataRec||'').startsWith(mes)) return false; if(busca&&!p.op.includes(busca)) return false; return true; });
+  document.getElementById('feCt').textContent=f.length+' recebimentos';
+  const ini=(pg.extrato-1)*PP; const pag=f.slice(ini,ini+PP);
+  document.getElementById('tbExt').innerHTML=pag.map(p=>`<tr>
+    <td style="font-weight:600">${fDate(p.dataRec)}</td>
+    <td class="mono">${p.op}</td><td style="font-size:11px">${p.nome||'—'}</td>
+    <td>${meioBadge(p.tipo,p.inst)}</td>
+    <td style="font-size:11px;color:var(--gray-600)">${p.numParc}/${p.inst}</td>
+    <td class="r" style="font-weight:700;color:var(--green)">${fBRL(p.valParc)}</td>
+    <td>${fDate(p.dataAprov)}</td>
+    <td><button class="abtn danger" onclick="abrirAct('${p.chave}','desvincular')">↩ Desvincular</button></td>
+  </tr>`).join('');
+  renderPag('pgExt',f.length,'extrato');
+}
+
+// ── ABA 6: SEM VENDA ──
+function renderSemVenda(){
+  const lista=Object.values(extrato).sort((a,b)=>b.data.localeCompare(a.data));
+  document.getElementById('tab-semvenda').innerHTML=`
+    <div class="frow">
+      <select id="fsvFiltro" onchange="renderSemVenda()"><option value="pendentes">Sem vínculo</option><option value="vinculados">Vinculados</option><option value="ignorados">Ignorados</option><option value="todos">Todos</option></select>
+      <select id="fsvTipo" onchange="renderSemVenda()"><option value="">Todos os tipos</option><option value="PIX Avulso">PIX Avulso</option><option value="Liberação MP">Liberação MP</option></select>
+      <input type="text" id="fsvBusca" placeholder="REF ou nome..." oninput="renderSemVenda()" style="width:140px">
+      <span class="fc" id="fsvCt"></span>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Data</th><th>Referência</th><th>Tipo</th><th>Descrição</th><th class="r">Valor</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead>
+      <tbody id="tbSV"></tbody>
+    </table><div class="pag" id="pgSV"></div></div>`;
+  const filtro=v('fsvFiltro')||'pendentes', tipo=v('fsvTipo'), busca=v('fsvBusca');
+  let f=lista.filter(e=>{
+    if(filtro==='pendentes'&&(e.vinculadoA||e.ignorado)) return false;
+    if(filtro==='vinculados'&&!e.vinculadoA) return false;
+    if(filtro==='ignorados'&&!e.ignorado) return false;
+    if(tipo&&e.tipo!==tipo) return false;
+    if(busca&&!e.ref.includes(busca)&&!(e.descricao||'').toLowerCase().includes(busca.toLowerCase())) return false;
+    return true;
+  });
+  document.getElementById('fsvCt').textContent=f.length+' registros';
+  const ini=(pg.semvenda-1)*PP; const pag=f.slice(ini,ini+PP);
+  document.getElementById('tbSV').innerHTML=pag.map(e=>{
+    const tipoBadge=e.tipo==='PIX Avulso'?'<span class="badge b-pix">PIX Avulso</span>':'<span class="badge b-cc">Liberação MP</span>';
+    let stLabel,btns;
+    if(e.vinculadoA){
+      stLabel='<span class="badge b-rec">✅ Vinculado</span>';
+      btns=`<button class="abtn danger" onclick="desvinularExt('${e.ref}')">↩ Desvincular</button>`;
+    } else if(e.ignorado){
+      stLabel='<span class="badge b-ig">Ignorado</span>';
+      btns=`<button class="abtn" onclick="desfazIgnorar('${e.ref}')">↩ Desfazer</button>`;
+    } else {
+      stLabel='<span class="badge b-venc">Pendente</span>';
+      btns=`<div class="abtns">
+        <button class="abtn primary" onclick="abrirVincExt('${e.ref}')">🔗 Vincular</button>
+        <button class="abtn" onclick="ignorarExt('${e.ref}')">✕ Ignorar</button>
+      </div>`;
+    }
+    return `<tr style="${e.ignorado?'opacity:.5':''}">
+      <td>${fDate(e.data)}</td><td class="mono">${e.ref}</td>
+      <td>${tipoBadge}</td>
+      <td style="font-size:11px;color:var(--gray-600);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.descricao}">${e.descricao}</td>
+      <td class="r" style="font-weight:700;color:var(--green)">${fBRL(e.valor)}</td>
+      <td>${stLabel}</td>
+      <td>${e.obs?'<span title="'+e.obs+'" style="cursor:help;font-size:13px">📝</span>':'—'}</td>
+      <td>${btns}</td>
+    </tr>`;
+  }).join('');
+  renderPag('pgSV',f.length,'semvenda');
+}
+
+// ── ABA 7: PREVISÃO ──
+function renderPrevisao(){
+  const hj=hoje(); const hjMes=hj.substring(0,7);
+  const lista=Object.values(vendas).filter(p=>p.statusP==='A Vencer'&&p.venc.substring(0,7)>=hjMes);
+  const porMes={};
+  lista.forEach(p=>{ const m=p.venc.substring(0,7); if(!porMes[m]) porMes[m]=[]; porMes[m].push(p); });
+  const meses=Object.keys(porMes).sort();
+  const totalGeral=lista.reduce((s,p)=>s+p.valParc,0);
+  const totalAtual=(porMes[hjMes]||[]).reduce((s,p)=>s+p.valParc,0);
+  const totalFut=lista.filter(p=>p.venc.substring(0,7)>hjMes).reduce((s,p)=>s+p.valParc,0);
+  const maiorMes=meses.length?Math.max(...meses.map(m=>porMes[m].reduce((s,p)=>s+p.valParc,0))):1;
+
+  const resumo=`<div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+    <div class="kpi"><label>Total A Vencer</label><div class="v">${fBRL(totalGeral)}</div><div class="s">${lista.length} parcelas</div></div>
+    <div class="kpi" style="border-top-color:var(--teal)"><label>Mês Atual</label><div class="v" style="color:var(--teal)">${fBRL(totalAtual)}</div><div class="s">${(porMes[hjMes]||[]).length} parcelas</div></div>
+    <div class="kpi b"><label>Próximos Meses</label><div class="v">${fBRL(totalFut)}</div><div class="s">${meses.filter(m=>m>hjMes).length} meses</div></div>
+  </div>`;
+
+  const cards=meses.map(mes=>{
+    const rows=porMes[mes]; const total=rows.reduce((s,p)=>s+p.valParc,0);
+    const pct=Math.round((total/maiorMes)*100); const isAtual=mes===hjMes;
+    const id='pv_'+mes.replace('-','');
+    const porDia={}; rows.forEach(p=>{ if(!porDia[p.venc]) porDia[p.venc]=[]; porDia[p.venc].push(p); });
+    const dias=Object.keys(porDia).sort();
+    return `<div class="prev-card">
+      <div class="prev-hdr ${isAtual?'atual':''}" onclick="togglePrev('${id}')">
+        <div class="prev-mes">${nomeMes(mes)}<small>${isAtual?'mês atual':'futuro'}</small></div>
+        <div class="prev-col"><label>A Vencer</label><div class="pv ${isAtual?'t':'b'}">${fBRL(total)}</div><div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div></div>
+        <div class="prev-col"><label>Parcelas</label><div class="pv">${rows.length}</div></div>
+        <div class="prev-col"><label>Vendas</label><div class="pv">${new Set(rows.map(p=>p.op)).size}</div></div>
+        <div class="prev-chev" id="pchev_${id}">▶</div>
+      </div>
+      <div class="prev-body" id="${id}">
+        <table><thead><tr><th>Data Prevista</th><th>Parcelas</th><th class="r">Total do Dia</th></tr></thead>
+        <tbody>${dias.map(dia=>{ const di=porDia[dia]; const dt=di.reduce((s,p)=>s+p.valParc,0); const[y,m2,d2]=dia.split('-'); const ds=new Date(dia+'T12:00:00Z').toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','');
+          return `<tr><td>${ds}, ${d2}/${m2}/${y}</td><td style="color:var(--gray-600);font-size:11px">${di.length} parcela${di.length>1?'s':''} · ${new Set(di.map(p=>p.op)).size} venda${new Set(di.map(p=>p.op)).size>1?'s':''}</td><td class="r" style="font-weight:700;color:var(--blue)">${fBRL(dt)}</td></tr>`;
+        }).join('')}</tbody></table>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tab-previsao').innerHTML=!meses.length?'<div class="empty-msg">Nenhuma parcela a vencer nos próximos meses.</div>':resumo+cards;
+}
+
+function togglePrev(id){ const el=document.getElementById(id); const ch=document.getElementById('pchev_'+id); el.classList.toggle('open'); ch.classList.toggle('open'); }
+
+// ── AÇÕES MANUAIS (vendas) ──
+function abrirAct(chave,tipo){
+  const p=vendas[chave]; if(!p) return;
+  actChave=chave; actTipo=tipo;
+  document.getElementById('actInfo').textContent=`Op. ${p.op} · Parc. ${p.numParc}/${p.inst} · ${fBRL(p.valParc)} · Venc. ${fDate(p.venc)}`;
+  let title='', body='';
+  if(tipo==='status'){
+    title='Alterar status';
+    body=`<label>Novo status</label>
+      <select id="actSt"><option value="Conferido">🟡 Conferido</option><option value="Cancelado">❌ Cancelado</option><option value="Estorno">↩ Estorno</option>${p.acaoManual?'<option value="reset">↩ Resetar para automático</option>':''}</select>
+      <label>Observação</label><textarea id="actObs" placeholder="Descreva o motivo...">${p.obs||''}</textarea>`;
+  } else if(tipo==='editar'){
+    title='Editar data de vencimento';
+    body=`<label>Nova data de vencimento</label><input type="date" id="actData" value="${p.venc}">
+      <label>Observação</label><textarea id="actObs" placeholder="Motivo da alteração...">${p.obs||''}</textarea>`;
+  } else if(tipo==='conciliar'){
+    title='Conciliar manualmente';
+    body=`<label>Buscar venda para vincular ao extrato</label>
+      <input type="text" class="vsearch" id="vcBusca" placeholder="ID operação ou nome..." oninput="filtrarVinc()">
+      <div class="vlista" id="vcLista"></div>
+      <label style="margin-top:12px">Data de recebimento</label><input type="date" id="actData" value="${hoje()}">
+      <label>Observação</label><textarea id="actObs" placeholder="Detalhes da conciliação manual..."></textarea>`;
+    setTimeout(()=>filtrarVinc(),50);
+  } else if(tipo==='desvincular'){
+    title='Desvincular conciliação';
+    body=`<p style="font-size:13px;color:var(--gray-600);margin-bottom:12px">Isso vai reverter a parcela para o status anterior. Tem certeza?</p>`;
+  }
+  document.getElementById('actTitle').textContent=title;
+  document.getElementById('actBody').innerHTML=body;
+  document.getElementById('ovAct').classList.add('open');
+}
+
+function fecharAct(){ document.getElementById('ovAct').classList.remove('open'); actChave=null; actTipo=null; vincSel=null; }
+
+function filtrarVinc(){
+  const busca=(document.getElementById('vcBusca')?.value||'').trim().toLowerCase();
+  const cands=Object.values(vendas).filter(p=>p.statusP!=='Recebido'&&(!busca||p.op.includes(busca)||p.nome.toLowerCase().includes(busca))).slice(0,40);
+  const el=document.getElementById('vcLista'); if(!el) return;
+  el.innerHTML=cands.map(p=>`<div class="vitem ${vincSel===p.chave?'sel':''}" onclick="selVinc('${p.chave}')">
+    <div><div style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">${p.op}</div><div style="font-size:11px">${p.nome||'—'} · ${p.numParc}/${p.inst}</div></div>
+    ${stBadge(p.statusP)}<span style="font-family:var(--mono);font-size:11px;font-weight:700">${fBRL(p.valParc)}</span>
+    <span style="font-size:10px;color:var(--gray-400)">Venc. ${fDate(p.venc)}</span>
+  </div>`).join('');
+}
+
+function selVinc(chave){ vincSel=chave; filtrarVinc(); }
+
+async function confirmarAct(){
+  if(!actChave||!actTipo) return;
+  const p=vendas[actChave];
+  if(actTipo==='status'){
+    const st=v('actSt'); const obs=v('actObs');
+    if(st==='reset'){ p.statusP=p.venc<hoje()?'Vencido':'A Vencer'; p.acaoManual=null; p.obs=null; }
+    else{ p.statusP=st; p.acaoManual=st; p.obs=obs||null; }
+  } else if(actTipo==='editar'){
+    const d=v('actData'); const obs=v('actObs');
+    if(d){ p.venc=d; p.vencEdit=true; p.obs=obs||null;
+      if(p.statusP!=='Recebido'&&!p.acaoManual) p.statusP=d<hoje()?'Vencido':'A Vencer'; }
+  } else if(actTipo==='conciliar'){
+    if(!vincSel){ alert('Selecione uma parcela para vincular.'); return; }
+    const dataRec=v('actData'); const obs=v('actObs');
+    p.statusP='Recebido'; p.dataRec=dataRec||hoje(); p.acaoManual='manual'; p.obs=obs||'Conciliado manualmente';
+    vincSel=null;
+  } else if(actTipo==='desvincular'){
+    p.statusP=p.venc<hoje()?'Vencido':'A Vencer'; p.dataRec=null; p.acaoManual=null; p.obs=null;
+  }
+  fecharAct();
+  await salvar(); renderTudo();
+}
+
+// ── AÇÕES EXTRATO SEM VENDA ──
+async function ignorarExt(ref){ extrato[ref].ignorado=true; await salvar(); renderTudo(); }
+async function desfazIgnorar(ref){ extrato[ref].ignorado=false; await salvar(); renderTudo(); }
+async function desvinularExt(ref){ extrato[ref].vinculadoA=null; await salvar(); renderTudo(); }
+
+function abrirVincExt(ref){
+  const e=extrato[ref]; if(!e) return;
+  actChave=ref; actTipo='vincext';
+  document.getElementById('actTitle').textContent='Vincular recebimento a uma venda';
+  document.getElementById('actInfo').textContent=`${e.tipo} · ${fDate(e.data)} · ${fBRL(e.valor)} · ${e.descricao}`;
+  document.getElementById('actBody').innerHTML=`
+    <label>Buscar venda</label>
+    <input type="text" class="vsearch" id="vcBusca" placeholder="ID operação ou nome..." oninput="filtrarVinc()">
+    <div class="vlista" id="vcLista"></div>
+    <label style="margin-top:12px">Observação</label>
+    <textarea id="actObs" placeholder="Detalhes..."></textarea>`;
+  setTimeout(()=>filtrarVinc(),50);
+  document.getElementById('ovAct').classList.add('open');
+}
+
+async function confirmarActExt(){
+  if(!vincSel){ alert('Selecione uma parcela.'); return; }
+  const e=extrato[actChave];
+  const p=vendas[vincSel];
+  e.vinculadoA=vincSel;
+  e.obs=v('actObs')||null;
+  p.statusP='Recebido'; p.dataRec=e.data; p.acaoManual='manual'; p.obs='Vinculado ao extrato '+actChave;
+  fecharAct(); await salvar(); renderTudo();
+}
+
+// Override confirmarAct para vincext
+const _origAct=confirmarAct;
+window.confirmarAct=async function(){ if(actTipo==='vincext') return confirmarActExt(); return _origAct(); };
+
+// ── UTILITÁRIOS ──
+function v(id){ const el=document.getElementById(id); return el?el.value:''; }
+function mesesOpts(lista,campo){ const ms=[...new Set(lista.map(p=>(p[campo]||'').substring(0,7)).filter(Boolean))].sort().reverse(); return ms.map(m=>`<option value="${m}">${nomeMes(m)}</option>`).join(''); }
+
+function renderPag(elId,total,tabNome){
+  const tp=Math.ceil(total/PP); const el=document.getElementById(elId); if(!el) return;
+  if(tp<=1){el.innerHTML='';return;}
+  const cur=pg[tabNome]||1; let h='';
+  if(cur>1) h+=`<button class="pb" onclick="irPg('${tabNome}',${cur-1})">←</button>`;
+  const ini=Math.max(1,cur-2),fim=Math.min(tp,cur+2);
+  for(let i=ini;i<=fim;i++) h+=`<button class="pb ${i===cur?'active':''}" onclick="irPg('${tabNome}',${i})">${i}</button>`;
+  if(cur<tp) h+=`<button class="pb" onclick="irPg('${tabNome}',${cur+1})">→</button>`;
+  el.innerHTML=h;
+}
+
+function irPg(tabNome,n){ pg[tabNome]=n; renderTab(tabNome); }
+
+function showTab(nome,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['vendas','conciliadas','pendentes','avencer','extrato','semvenda','previsao'].forEach(t=>{ document.getElementById('tab-'+t).style.display=t===nome?'block':'none'; });
+  pg[nome]=pg[nome]||1;
+  renderTab(nome);
+}
+
+init();
+</script>
+</body>
+</html>
